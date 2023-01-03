@@ -22,7 +22,7 @@
                 "Premium_LRS"
             ],
 
-            "defaultValue": "Standard_LRS"
+            "defaultValue": "Standard_GRS"
         },
 
         "storageAccountCount": {
