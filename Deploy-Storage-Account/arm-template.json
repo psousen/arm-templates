@@ -1,0 +1,63 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of storage account"
+            }
+        },
+
+        "storageAccountType": {
+            "type": "string",
+            "metadata": {
+                "description": "Type of storage account"
+            },
+
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS",
+                "Premium_LRS"
+            ],
+
+            "defaultValue": "Standard_LRS"
+        },
+
+        "storageAccountCount": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of storage accounts"
+            }
+        }
+        
+    },
+    "functions": [],
+    "variables": {
+        "storageApiVersion": "2015-6-15"
+    },
+    "resources": [
+        {
+            "name": "[toLower(concat(parameters('storageAccountName'),copyIndex(),uniqueString(resourceGroup().id)))]",
+            "copy":{
+                "name": "storagecopy",
+                "count": "[parameters('storageAccountCount')]"
+            },
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "[variables('storageApiVersion')]",
+            "tags": {
+                "displayName": "[toLower(concat(parameters('storageAccountName'),uniqueString(resourceGroup().id)))]"
+            },
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Premium_LRS",
+                "tier": "[parameters('storageAccountType')]"
+            }
+        }
+    ],
+    "outputs": {
+        
+    }
+}

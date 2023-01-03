@@ -1,0 +1,108 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "NetworkInterfaceType": {
+            "type": "string",
+            "metadata": {
+                "description": "whether to have a public or private NIC"
+            },
+            "allowedValues": [
+                "Public",
+                "Private"
+            ]
+        },
+        "NICName": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "NetworkName": "Lambda-vnet",
+        "Subnet1Name": "Lambda-subnet1",
+        "Subnet2Name": "Lambda-subnet2",
+        "NICName": "lambdanic1",
+        "PublicIPName": "[concat(variables('NICName'), '-pip')]",
+        "publicIP1": {
+            "id": "[resourceId('Microsoft.Network/publicIPAddress',concat(variables('NICName'), '-pip'))]"
+        }
+    },
+    "resources": [
+       {
+        "name": "[variables('NetworkName')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2020-11-01",
+        "location": "[resourceGroup().location]",
+        "tags": {
+            "displayName": "[variables('NetworkName')]"
+        },
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "10.0.0.0/16"
+                ]
+            },
+            "subnets": [
+                {
+                    "name": "[variables('Subnet1Name')]",
+                    "properties": {
+                        "addressPrefix": "10.0.0.0/24"
+                    }
+                },
+                {
+                    "name": "[variables('Subnet2Name')]",
+                    "properties": {
+                        "addressPrefix": "10.0.1.0/24"
+                    }
+                }
+            ]
+        }
+       },
+       {
+        "name": "[variables('PublicIPName')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "condition": "[equals(parameters('NetworkInterfaceType'),'Public')]",
+        "apiVersion": "2020-11-01",
+        "location": "[resourceGroup().location]",
+        "tags": {
+            "displayName": "[variables('PublicIPName')]"
+        },
+        "properties": {
+            "publicIPAllocationMethod": "Dynamic",
+            "dnsSettings": {
+                "domainNameLabel": "[concat(variables('NICName'), '-pip')]"
+            }
+        }
+       },
+       {
+        "name": "[variables('NICName')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "apiVersion": "2020-11-01",
+        "location": "[resourceGroup().location]",
+        "tags": {
+            "displayName": "[parameters('NICName')]"
+        },
+        "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworks', variables('NetworkName'))]"
+        ],
+        "properties": {
+            "ipConfigurations": [
+                {
+                    "name": "ipConfig1",
+                    "properties": {
+                        "privateIPAllocationMethod": "Dynamic",
+                        "subnet": {
+                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets', variables('NetworkName'), variables('Subnet1Name')))]"
+                        }
+                    },
+                      "piblicIPAdresss":"[if(equals(parameters('NetworkInterfaceType'),'Public'), variables('publicIP1'),json('null'))]"
+                }
+            ]
+        }
+       }
+    ],
+    "outputs": {}
+}
